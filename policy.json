@@ -1,0 +1,6 @@
+{
+  "maxUsdPerRun": 1.0,
+  "crossCheckAlways": false,
+  "requireApproval": ["send email", "send an email", "post to", "publish", "purchase", "pay ", "delete", "submit"],
+  "blocked": ["password", "bank account", "credit card", "otp", "seed phrase"]
+}

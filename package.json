@@ -1,0 +1,29 @@
+{
+  "name": "jarvis-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Jarvis core: multi-AI orchestrator with cross-checking, policy gates, cost caps and audit log",
+  "scripts": {
+    "start": "tsx src/server.ts",
+    "dev": "tsx watch src/server.ts",
+    "jarvis": "tsx src/cli.ts",
+    "demo": "tsx src/cli.ts --mock --yes \"Research report on the AI agent orchestration market\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "pg": "^8.13.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
