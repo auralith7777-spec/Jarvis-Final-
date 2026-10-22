@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jarvis</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div id="login" class="login" hidden>
+    <div class="login-card">
+      <h1>Jarvis</h1>
+      <p class="muted">Sign in to see what your agents are doing.</p>
+      <label for="pw">Password</label>
+      <input id="pw" type="password" autocomplete="current-password">
+      <button id="login-btn" class="primary">Sign in</button>
+      <p id="login-err" class="error" role="alert"></p>
+    </div>
+  </div>
+
+  <div id="app" hidden>
+    <header class="top">
+      <div class="brand">Jarvis</div>
+      <div id="agents" class="agents" aria-label="Connected agents"></div>
+      <div class="screen-state" title="Screen capture is not part of this web version.">
+        <span class="ring" aria-hidden="true"></span>
+        <span>Not watching your screen</span>
+      </div>
+      <button id="logout" class="ghost">Sign out</button>
+    </header>
+
+    <div class="layout">
+      <aside class="side" aria-label="Jobs">
+        <button id="new-job" class="ghost wide">New job</button>
+        <ul id="job-list" class="job-list"></ul>
+      </aside>
+
+      <main id="main" class="main"></main>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
