@@ -120,7 +120,7 @@ const approveFlag = (req: Request) => {
 const wrap = (fn: (req: Request, res: Response) => Promise<unknown>) => (req: Request, res: Response, next: NextFunction) =>
   fn(req, res).catch(next);
 
-api.get("/status", (_req, res) => res.json({ agents: engine.agents, mock: engine.usingMock, capUsd: engine.capUsd }));
+api.get("/status", (_req, res) => res.json({ agents: engine.agents, roster: engine.roster, mock: engine.usingMock, capUsd: engine.capUsd }));
 api.get("/jobs", wrap(async (_req, res) => void res.json(await engine.list())));
 api.post("/jobs", wrap(async (req, res) => {
   const goal = typeof req.body?.goal === "string" ? req.body.goal : "";

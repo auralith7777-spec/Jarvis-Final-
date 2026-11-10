@@ -35,6 +35,16 @@ export class Engine {
   get agents(): string[] {
     return this.connectors.map((c) => c.card.id);
   }
+  get roster() {
+    return this.connectors.map((c) => ({
+      id: c.card.id,
+      provider: c.card.provider,
+      model: c.card.model,
+      strengths: c.card.strengths,
+      priceIn: c.card.priceInPerMTok,
+      priceOut: c.card.priceOutPerMTok,
+    }));
+  }
   get capUsd(): number {
     return this.policy.maxUsdPerRun;
   }

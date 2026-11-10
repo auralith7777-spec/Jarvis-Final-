@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Jarvis</title>
+  <title>Jarvis control room</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/style.css">
 </head>
@@ -11,7 +11,7 @@
   <div id="login" class="login" hidden>
     <div class="login-card">
       <h1>Jarvis</h1>
-      <p class="muted">Sign in to see what your agents are doing.</p>
+      <p class="muted">Sign in to open the control room.</p>
       <label for="pw">Password</label>
       <input id="pw" type="password" autocomplete="current-password">
       <button id="login-btn" class="primary">Sign in</button>
@@ -19,27 +19,22 @@
     </div>
   </div>
 
-  <div id="app" hidden>
-    <header class="top">
-      <div class="brand">Jarvis</div>
-      <div id="agents" class="agents" aria-label="Connected agents"></div>
-      <div class="screen-state" title="Screen capture is not part of this web version.">
-        <span class="ring" aria-hidden="true"></span>
-        <span>Not watching your screen</span>
-      </div>
-      <button id="logout" class="ghost">Sign out</button>
-    </header>
-
-    <div class="layout">
-      <aside class="side" aria-label="Jobs">
-        <button id="new-job" class="ghost wide">New job</button>
-        <ul id="job-list" class="job-list"></ul>
-      </aside>
-
-      <main id="main" class="main"></main>
-    </div>
+  <div id="app" class="shell" hidden>
+    <aside class="rail">
+      <div class="brand"><span class="logo">J</span><div><b>JARVIS</b><small>PRIVATE CONTROL ROOM</small></div></div>
+      <p class="eyebrow">WORKSPACE</p>
+      <nav class="nav">
+        <button data-view="room" class="on">Control room</button>
+        <button data-view="log">Activity log</button>
+        <button data-view="roster">Model roster</button>
+      </nav>
+      <div class="operator"><div><b>Authorized operator</b><small>SESSION ACTIVE</small></div><button id="logout" class="ghost" title="Sign out">Sign out</button></div>
+    </aside>
+    <section class="content">
+      <div class="statusline"><span id="statusline"></span><span id="stamp" class="muted"></span></div>
+      <div id="main" class="main"></div>
+    </section>
   </div>
-
   <script src="/app.js"></script>
 </body>
 </html>

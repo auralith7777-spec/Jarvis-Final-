@@ -18,7 +18,7 @@ function h(tag, props, ...kids) {
   return el;
 }
 
-const state = { status: null, jobs: [], selectedId: null, job: null, busy: false, error: "", open: new Set(), draft: "" };
+const state = { view: "room", status: null, jobs: [], selectedId: null, job: null, busy: false, error: "", open: new Set(), draft: "" };
 let timer = null;
 
 async function api(path, opts = {}) {
@@ -89,6 +89,7 @@ async function refreshJob() {
 }
 async function tick() {
   try {
+    renderHeader();
     await refreshJobs();
     await refreshJob();
   } catch {
@@ -118,25 +119,48 @@ async function act(fn) {
 
 // ---------- render ----------
 function renderHeader() {
-  const box = $("#agents");
-  box.replaceChildren(
-    ...(state.status?.agents || []).map((a) => h("span", { class: "chip" + (state.status.mock ? " demo" : "") }, a)),
-    state.status?.mock ? h("span", { class: "muted" }, "Offline demo agents. Add API keys on the server for real AIs.") : null
-  );
+  $("#statusline").replaceChildren(h("span", { class: "sdot" }), state.status?.mock ? "DEMO AGENTS ACTIVE" : "AGENTS ACTIVE");
+  $("#stamp").textContent = "Updated " + new Date().toLocaleTimeString();
 }
 
 function renderSide() {
-  const list = $("#job-list");
-  list.replaceChildren(
-    ...state.jobs.map((j) =>
-      h("li", {},
-        h("button", { class: "job-item", "aria-current": j.id === state.selectedId ? "true" : "false", onclick: () => select(j.id) },
-          h("span", { class: "job-goal" }, j.goal),
-          h("span", { class: "job-meta" }, (STATUS[j.status] || [j.status])[0] + " · " + when(j.createdAt))
-        )
-      )
-    )
-  );
+  document.querySelectorAll(".nav button").forEach((b) => b.classList.toggle("on", b.dataset.view === state.view));
+}
+
+function stat(label, value, sub) {
+  return h("div", { class: "stat" }, h("span", {}, label), h("b", {}, value), h("p", {}, sub));
+}
+function stats() {
+  const active = state.jobs.filter((j) => ACTIVE.has(j.status)).length;
+  const review = state.jobs.filter((j) => j.status === "awaiting_plan" || j.status === "awaiting_step").length;
+  return h("div", { class: "stats" },
+    stat("Active work", `${active} / 3`, "Concurrent run limit"),
+    stat("Current spend", money(state.job ? state.job.costTotal : 0), "Selected goal, estimated"),
+    stat("Operator review", String(review), "Plan or step decisions pending"),
+    stat("Per-run ceiling", "$" + Number(state.status?.capUsd ?? 0).toFixed(2), "Policy spend limit"));
+}
+function emptyBox(title, text) {
+  return h("div", { class: "empty" }, h("span", { class: "logo" }, "J"), h("b", {}, title), h("p", {}, text));
+}
+function picker() {
+  const sel = h("select", { class: "sel", "aria-label": "Saved goals", onchange: (e) => e.target.value && select(e.target.value) },
+    h("option", { value: "" }, state.jobs.length ? "Select a saved goal" : "No saved goals"),
+    ...state.jobs.map((j) => h("option", { value: j.id, selected: j.id === state.selectedId }, j.goal.slice(0, 70) + " · " + (STATUS[j.status] || [j.status])[0])));
+  return sel;
+}
+function rosterView() {
+  const r = state.status?.roster || [];
+  return h("section", { class: "panel" }, h("h3", {}, "Model roster"),
+    r.length ? h("table", {},
+      h("thead", {}, h("tr", {}, ...["Agent", "Provider", "Model", "Strengths", "In / Out per 1M tokens"].map((t) => h("th", {}, t)))),
+      h("tbody", {}, ...r.map((x) => h("tr", {}, h("td", {}, x.id), h("td", {}, x.provider), h("td", {}, x.model), h("td", {}, x.strengths.join(", ")), h("td", {}, `$${x.priceIn} / $${x.priceOut}`)))))
+      : emptyBox("No agents", "Add an API key on the server."),
+    h("p", { class: "tags" }, "Prices are estimates from your server settings."));
+}
+function logView() {
+  const j = state.job;
+  return h("section", { class: "panel" }, h("h3", {}, "Activity log"),
+    j ? h("div", { class: "log" }, ...j.events.map(eventLine)) : emptyBox("No goal selected", "Pick a saved goal in the control room to see everything that happened."));
 }
 
 function composer() {
@@ -270,17 +294,33 @@ function jobView(job) {
 }
 
 function renderMain() {
+  const ae = document.activeElement;
+  if (ae && (ae.tagName === "SELECT" || ae.tagName === "TEXTAREA")) return; // don't disturb typing or an open dropdown
   const main = $("#main");
-  // don't wipe a half-typed goal while polling
-  if (!state.selectedId) {
-    main.replaceChildren(...[composer(), state.jobs.length ? null : h("p", { class: "empty" }, "No jobs yet. Describe a goal above and Jarvis will plan it.")].filter(Boolean));
-    return;
-  }
-  if (!state.job) {
-    main.replaceChildren(h("p", { class: "empty" }, "Loading…"));
-    return;
-  }
-  main.replaceChildren(...jobView(state.job).filter(Boolean));
+  renderSide();
+  if (state.view === "roster") return main.replaceChildren(rosterView());
+  if (state.view === "log") return main.replaceChildren(logView());
+  const job = state.job;
+  main.replaceChildren(...[
+    h("div", { class: "head" },
+      h("div", {}, h("span", { class: "crumb" }, "Operator console / Control room"), h("h1", { class: "h1" }, "Control room"),
+        h("p", { class: "muted" }, "A deliberate queue for work that stays under your control.")),
+      h("button", { class: "primary", onclick: newGoal }, "+ New goal")),
+    stats(),
+    state.selectedId ? null : composer(),
+    h("section", { class: "panel" }, h("div", { class: "row" }, h("h3", { class: "grow" }, "Selected goal"), h("div", { class: "pick" }, picker())),
+      state.selectedId && !job ? h("p", { class: "muted" }, "Loading…") : null,
+      !state.selectedId ? emptyBox("Nothing in the queue", "Create a goal to ask Jarvis for a proposed plan. Work will not run until you review it.") : null),
+    ...(job && state.selectedId ? jobView(job) : []),
+  ].filter(Boolean));
+}
+
+function newGoal() {
+  state.view = "room";
+  state.selectedId = null;
+  state.job = null;
+  state.error = "";
+  renderMain();
 }
 
 async function start() {
@@ -291,11 +331,7 @@ async function start() {
   await tick();
   renderMain();
   clearInterval(timer);
-  timer = setInterval(() => {
-    // poll quickly while something is running, otherwise leave the form alone
-    if (!state.selectedId) return refreshJobs().catch(() => {});
-    tick();
-  }, 1800);
+  timer = setInterval(tick, 1800);
 }
 
 // ---------- wire up ----------
@@ -305,12 +341,11 @@ $("#logout").addEventListener("click", async () => {
   await api("/logout", { method: "POST" }).catch(() => {});
   showLogin();
 });
-$("#new-job").addEventListener("click", () => {
-  state.selectedId = null;
-  state.job = null;
-  state.error = "";
-  renderSide();
-  renderMain();
-});
+document.querySelectorAll(".nav button").forEach((b) =>
+  b.addEventListener("click", () => {
+    state.view = b.dataset.view;
+    renderMain();
+  })
+);
 
 start().catch(showLogin);
